@@ -5,5 +5,5 @@ fronty:
         not_blank: Please fill in the required field Merchant ID.
       service_id:
         not_blank: Please fill in the required field Service ID.
-      service_id:
+      service_key:
         not_blank: Please fill in the required field Secret Key.
