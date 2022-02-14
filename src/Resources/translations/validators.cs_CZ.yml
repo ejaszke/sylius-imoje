@@ -5,5 +5,5 @@ fronty:
         not_blank: Prosím vyplňte povinné pole ID obchodníka.
       service_id:
         not_blank: Prosím vyplňte povinné pole ID obchodu.
-      service_id:
+      service_key:
         not_blank: Prosím vyplňte povinné pole tajný klíč.
