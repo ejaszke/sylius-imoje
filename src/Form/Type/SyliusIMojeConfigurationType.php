@@ -55,5 +55,6 @@ final class SyliusIMojeConfigurationType extends AbstractType
 					])
 				]
 			]);
+
 	}
 }

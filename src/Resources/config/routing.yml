@@ -1,0 +1,5 @@
+fronty.imoje_payment_notification:
+    path: /notification
+    methods: [POST]
+    defaults:
+        _controller: fronty.imoje.notification.controller:processAction

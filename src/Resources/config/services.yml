@@ -1,5 +1,17 @@
-# Services
 services:
+    fronty.imoje.notification.controller:
+        class: Fronty\SyliusIMojePlugin\Controller\NotificationController
+        public: true
+        arguments:
+            - '@sylius.repository.order'
+            - '@payum.dynamic_gateways.config_storage'
+            - "@sylius.repository.payment"
+            - "@logger"
+            - "@sm.factory"
+            - "@sylius.manager.payment"
+            - "@sylius.manager.order"
+        tags: ['controller.service_arguments']
+             
     fronty.imoje.form.type.configuration:
         class: Fronty\SyliusIMojePlugin\Form\Type\SyliusIMojeConfigurationType
         tags:
@@ -11,3 +23,10 @@ services:
         arguments: [Fronty\SyliusIMojePlugin\SyliusIMojeGatewayFactory]
         tags:
             - { name: payum.gateway_factory_builder, factory: imoje }
+            
+    fronty.imoje.bridge.imoje:
+        class: Fronty\SyliusIMojePlugin\Bridge\ImojeBridge
+        public: true
+        arguments:
+            - "@sylius.http_client"
+

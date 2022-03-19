@@ -4,17 +4,22 @@ declare(strict_types=1);
 
 namespace Fronty\SyliusIMojePlugin\Action;
 
+use BitBag\SyliusPrzelewy24Plugin\Bridge\Przelewy24BridgeInterface;
 use Fronty\SyliusIMojePlugin\Api\IMojeApiInterface;
 use Payum\Core\Action\ActionInterface;
+use Payum\Core\ApiAwareInterface;
+use Payum\Core\GatewayAwareInterface;
+use Payum\Core\GatewayAwareTrait;
+use Payum\Core\Request\GetHttpRequest;
 use Payum\Core\Request\GetStatusInterface;
 use Payum\Core\Exception\RequestNotSupportedException;
 use Payum\Core\Bridge\Spl\ArrayObject;
+use Sylius\Component\Core\Model\PaymentInterface;
 
-/**
- * @author Ondrej Seliga <ondrej@seliga.cz>
- */
-final class StatusAction implements ActionInterface
+
+final class StatusAction implements ActionInterface, GatewayAwareInterface
 {
+    use GatewayAwareTrait;
 
 	/**
 	 * @param GetStatusInterface $request
@@ -22,28 +27,47 @@ final class StatusAction implements ActionInterface
 	 */
 	public function execute($request)
 	{
-		RequestNotSupportedException::assertSupports($this, $request);
+        RequestNotSupportedException::assertSupports($this, $request);
 
-		$model = ArrayObject::ensureArrayObject($request->getModel());
-		// $status = isset($model['imojeStatus']) ? $model['imojeStatus'] : null;
-		$status = (isset($_GET['status'])) ? $_GET['status'] : null;
+        $details = $request->getModel();
 
-		if ($status === NULL) {
-			$request->markNew();
-			return;
-		}
+        $this->gateway->execute($httpRequest = new GetHttpRequest());
 
-		if ($status === IMojeApiInterface::STATUS_REJECTED) {
-			$request->markCanceled();
-			return;
-		}
+        if (isset($httpRequest->query['status']) &&
+            $httpRequest->query['status'] === IMojeApiInterface::STATUS_CANCELED
+        ) {
+            $details['imoje_status'] = IMojeApiInterface::STATUS_CANCELED;
+            $request->markCanceled();
 
-		if ($status === IMojeApiInterface::STATUS_SETTLED) {
-			$request->markCaptured();
-			return;
-		}
+            return;
+        }
 
-		$request->markUnknown();
+        if (false === isset($details['imoje_status'])) {
+            $request->markNew();
+
+            return;
+        }
+
+        if (IMojeApiInterface::STATUS_SETTLED === $details['imoje_status']) {
+            $request->markCaptured();
+
+            return;
+        }
+
+        if (IMojeApiInterface::STATUS_PENDING === $details['imoje_status']) {
+            $request->markPending();
+
+            return;
+        }
+
+        if (IMojeApiInterface::STATUS_ERROR === $details['imoje_status']) {
+            $request->markFailed();
+
+            return;
+        }
+
+
+        $request->markUnknown();
 	}
 
 	/**

@@ -19,4 +19,10 @@ interface IMojeApiInterface
 	/** Response statuses according to which to mark payment status */
 	const STATUS_SETTLED = 'settled';
 	const STATUS_REJECTED = 'rejected';
+	const STATUS_NEW = 'rejected';
+	const STATUS_AUTHORIZED = 'authorized';
+	const STATUS_PENDING = 'pending';
+	const STATUS_SUBMITTED = 'submitted';
+	const STATUS_ERROR = 'error';
+	const STATUS_CANCELED = 'canceled';
 }

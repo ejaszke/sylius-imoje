@@ -6,6 +6,8 @@ namespace Fronty\SyliusIMojePlugin\Api;
 
 use Payum\Core\Bridge\Spl\ArrayObject;
 use Payum\Core\Exception\Http\HttpException;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 /**
  * @author Ondrej Seliga <ondrej@seliga.cz>
@@ -37,6 +39,31 @@ final class IMojeApi implements IMojeApiInterface
         ]);
         $this->options = $options;
 	}
+
+    public static function checkRequestNotification($serviceKey, $serviceId)
+    {
+        $request = Request::createFromGlobals();
+        $payload = $request->getContent();
+
+        $header = (explode(';', $request->headers->get('X-IMoje-Signature')));
+
+        $algoFromNotification = explode('=', $header[3]);
+        $algoFromNotification = $algoFromNotification[1];
+
+        $headerSignature = explode('=', $header[2]);
+
+        if ($headerSignature[1] !== hash($algoFromNotification, $payload . $serviceKey)) {
+            throw new BadRequestHttpException('Wrong signature' .hash($algoFromNotification, $payload . $serviceKey) );
+        }
+
+        $payloadDecoded = json_decode($payload, true);
+
+        if ($payloadDecoded['transaction']['serviceId'] !== $serviceId) {
+            throw new BadRequestHttpException('Wrong service id');
+        }
+
+        return $payloadDecoded;
+    }
 
 	/**
 	 * @return string
@@ -84,8 +111,8 @@ final class IMojeApi implements IMojeApiInterface
 		}
 		$result = ArrayObject::ensureArrayObject($result);
 		$result->validateNotEmpty($requiredFields);
-		$result['signature'] = $this->createSignature((array)$result, $this->options['serviceKey']);
-		return (array)$result;
+		$result['signature'] = $this->createSignature((array)$result, $this->options['serviceKey'], 'sha256');
+		return $result->toUnsafeArray();
 	}
 
 	/**
@@ -96,14 +123,17 @@ final class IMojeApi implements IMojeApiInterface
 	 *
 	 * @see https://www.imoje.pl/developerzy/paywall-api#1 (section "Przykład wyliczenia sygnatury")
 	 */
-	private function createSignature(array $fields, string $serviceKey): string
-	{
-		ksort($fields);
-		$data = [];
-		foreach ($fields as $key => $val) {
-			$data[] = "$key=$val";
-		}
-		$hash = hash(self::HASH_METHOD, implode('&', $data) . $serviceKey) . ';' . self::HASH_METHOD;
-		return $hash;
-	}
+    function createSignature($orderData, $serviceKey, $hashMethod)
+    {
+        ksort($orderData);
+        $data = '';
+        foreach($orderData as $key => $value) {
+            $data .= $key . '=' . $value . "&";
+        }
+        return hash($hashMethod, $data . $serviceKey). ';' . $hashMethod;
+    }
+
+    function getKey(): string {
+        return $this->options['serviceKey'];
+    }
 }

@@ -26,7 +26,7 @@ class SyliusIMojeGatewayFactory extends GatewayFactory
             'payum.factory_title' => 'IMoje.pl',
             'payum.action.status' => new StatusAction(),
             'payum.action.convert_payment' => new ConvertPaymentAction(),
-            'payum.action.capture' => new CaptureAction()
+            'payum.action.capture' => new CaptureAction(),
 		]);
 
 		if ($config['payum.api'] == false) {
